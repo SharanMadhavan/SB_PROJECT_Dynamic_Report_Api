@@ -1,5 +1,6 @@
 package com.jrtp.service;
 
+import java.awt.Color;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,15 +15,28 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.jrtp.entity.CourseDetails;
 import com.jrtp.model.SearchInputs;
 import com.jrtp.model.SearchResults;
 import com.jrtp.repository.CourseDetailsRepository;
+import com.lowagie.text.Document;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfTable;
+import com.lowagie.text.pdf.PdfWriter;
 
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Service
 public class CourseDetailsServiceIMPL implements CourseDetailsService {
 	@Autowired
 	private CourseDetailsRepository courseRepo;
@@ -94,13 +108,80 @@ public class CourseDetailsServiceIMPL implements CourseDetailsService {
 	}
 
 	@Override
-	public void generatePdfReport(SearchInputs inputs, HttpServletResponse res) {
-		// TODO Auto-generated method stub
-
+	public void generatePdfReport(SearchInputs inputs, HttpServletResponse res) throws Exception {
+		//  get the search result
+		List<SearchResults> listresult = showCoursesByFilter(inputs);
+		// create document obj openPdf
+		Document documet = new Document(PageSize.A4);
+		// get pdf writer  to write to the document  and  response object
+		PdfWriter.getInstance(documet,res.getOutputStream());
+		// open the document
+		documet.open();
+		// define font for th page
+		Font font = FontFactory.getFont(FontFactory.TIMES_BOLD);
+		font.setSize(30);
+		font.setColor(Color.RED);
+		
+		/// create the paragraph having the content with above font , colour
+		Paragraph para = new Paragraph("Search report of courses",font);
+		para.setAlignment(Paragraph.ALIGN_CENTER);
+		// add paragraph to document
+		documet.add(para);
+		
+		// display search result as a pdf table
+		PdfPTable table = new PdfPTable(10);
+		table.setWidthPercentage(70);
+		table.setWidths(new float[] {1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f} );
+		table.setSpacingBefore(2.0f);
+		
+		// prepare heading rows cells in the pdf table
+		PdfPCell cell = new PdfPCell();
+		cell.setBackgroundColor(Color.gray);
+		cell.setPadding(5);
+		Font cellFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
+		cellFont.setColor(Color.BLACK);
+		cell.setPhrase(new Phrase("courseId",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("courseName",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("courseCategory",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("location",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("facultyName",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("fee",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("adminContact",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("trainingMode",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("startDate",cellFont));
+		table.addCell(cell);
+		cell.setPhrase(new Phrase("courseStatus",cellFont));
+		table.addCell(cell);
+		
+		// add data cells to the pdftable
+		listresult.forEach(result -> {
+			table.addCell(String.valueOf(result.getCourseId()));
+			table.addCell(result.getCourseName());
+			table.addCell(result.getCourseCategory());
+			table.addCell(result.getFacultyName());
+			table.addCell(result.getLocation());
+			table.addCell(String.valueOf(result.getFee()));
+			table.addCell(result.getCourseStatus());
+			table.addCell(result.getTrainingMode());
+			table.addCell(result.getStartDate().toString());
+			table.addCell(String.valueOf(result.getAdminContact()));
+		});
+		// add table document 
+		documet.add(table);
+		// close the documet
+		documet.close();
 	}
 
 	@Override
-	public void generateExcelReport(SearchInputs inputs, HttpServletResponse res) {
+	public void generateExcelReport(SearchInputs inputs, HttpServletResponse res) throws Exception{
 		
 		List<SearchResults> listResults = showCoursesByFilter(inputs);
 		// in the excel there is workbook and bottom sheets are there and also rows and cells they are staritng with index 0
@@ -138,7 +219,15 @@ public class CourseDetailsServiceIMPL implements CourseDetailsService {
 			datarow.createCell(9).setCellValue(result.getCourseStatus());
 			i++;
 		}
-
+		//get output stream pointing to response obj
+		ServletOutputStream outputstrem = res.getOutputStream();
+		//write the work book data response object using the above stream.
+		
+		workbook.write(outputstrem);
+		
+		// clost the output stream and workbook
+		outputstrem.close();
+		workbook.close();
 	}
 
 }
