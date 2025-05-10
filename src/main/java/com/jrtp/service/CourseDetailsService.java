@@ -18,5 +18,8 @@ public interface CourseDetailsService {
 	
 	public void generatePdfReport(SearchInputs inputs,HttpServletResponse res) throws Exception;
 	public void generateExcelReport(SearchInputs inputs, HttpServletResponse res) throws Exception;
+	
+	public void generatePdfReportForAllCourses(HttpServletResponse res) throws Exception;
+	public void generateExcelReportForAllCourses(HttpServletResponse res)throws Exception;
 
 }

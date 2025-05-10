@@ -104,5 +104,36 @@ public class ReportOperationsController {
 		}
 	}
 	
-
+	@GetMapping("/all-courses-pdf")
+	public void  generatePdfReportForAllCourses(HttpServletResponse res) throws Exception{
+		try {
+			//set the response contect type
+			res.setContentType("application/pdf");
+			// set the content disposition header to response content going to browser as downloadle file
+			res.setHeader("Content-Disposition", "attachment;fileName=Allcourses.pdf");
+			// use service
+			service.generatePdfReportForAllCourses(res);
+			
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	@GetMapping("/all-courses-excel")
+	public void generateExcelReportForAllCourses(HttpServletResponse res)throws Exception{
+		try {
+			//set the response contect type
+			res.setContentType("application/vnd.ms-excel");
+			// set the content disposition header to response content going to browser as downloadle file
+			res.setHeader("Content-Disposition", "attachment;fileName=Allcourses.xls");
+			// use service
+			service.generateExcelReportForAllCourses(res);
+			
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
